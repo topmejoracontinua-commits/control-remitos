@@ -101,8 +101,7 @@
     </div>
 
     <script>
-      // ⚠️ REEMPLAZÁ ACÁ CON TU URL DE DEPLOYMENT DE APPS SCRIPT (termina en /exec)
-      var urlAppsScript = "https://script.google.com/macros/s/TU_ID_DE_DEPLOYMENT/exec";
+      var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
       function evaluarEstado() {
         var estado = document.getElementById('subestado_id').value;
@@ -159,22 +158,23 @@
             fotoNombre: fotoNombre || ""
           };
 
+          // mode: "no-cors" -> Apps Script no devuelve headers CORS legibles,
+          // así que no podemos leer la respuesta, pero la request SÍ llega
+          // y el backend SÍ ejecuta (sube a Drive + avisa a n8n).
           fetch(urlAppsScript, {
             method: "POST",
-            // text/plain evita el preflight CORS que Apps Script no responde bien
+            mode: "no-cors",
             headers: { "Content-Type": "text/plain;charset=utf-8" },
             body: JSON.stringify(payload)
           })
-          .then(function(response) { return response.json(); })
-          .then(function(data) {
+          .then(function() {
+            // No podemos confirmar el resultado real por el bloqueo de CORS,
+            // así que asumimos éxito. Si falla algo del lado del servidor,
+            // revisar Executions en Apps Script.
             btn.disabled = false;
-            if (data.ok) {
-              mostrarMensaje('¡Odoo actualizado con éxito! ✅', 'exito');
-              document.getElementById('formRemito').reset();
-              evaluarEstado();
-            } else {
-              mostrarMensaje('❌ Error: ' + data.error, 'error');
-            }
+            mostrarMensaje('¡Datos enviados! Verificá en Odoo. ✅', 'exito');
+            document.getElementById('formRemito').reset();
+            evaluarEstado();
           })
           .catch(function(error) {
             btn.disabled = false;

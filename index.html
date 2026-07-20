@@ -82,7 +82,20 @@
           <input type="number" id="remito_num" name="remito_num" placeholder="Ej: 06997" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
         </div>
         
-        <label>2. Seleccionar Estado:</label>
+        <label>2. Chofer:</label>
+        <select id="chofer" name="chofer" required>
+          <option value="" disabled selected>Seleccioná tu nombre</option>
+          <option value="Hermes Diego">Hermes Diego</option>
+          <option value="Alexander Ayala">Alexander Ayala</option>
+          <option value="Vera Matias">Vera Matias</option>
+          <option value="Alexis Silva">Alexis Silva</option>
+          <option value="Jorge Lub">Jorge Lub</option>
+          <option value="Sanabria Julio">Sanabria Julio</option>
+          <option value="Alejandro Garcia">Alejandro Garcia</option>
+          <option value="Talavera Lucas">Talavera Lucas</option>
+        </select>
+
+        <label>3. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
           <option value="2">🚚 En viaje hacia cliente</option>
           <option value="3">✅ Entrega Final</option>
@@ -130,12 +143,18 @@
 
       function validarYEnviar() {
         var numInput = document.getElementById('remito_num').value.trim();
+        var chofer = document.getElementById('chofer').value;
         var estadoId = document.getElementById('subestado_id').value;
         var archivoFoto = document.getElementById('foto_remito').files[0];
         var btn = document.getElementById('btnEnviar');
         
         if(!numInput) {
           mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
+          return;
+        }
+
+        if(!chofer) {
+          mostrarMensaje('⚠️ Por favor, seleccioná el chofer.', 'error');
           return;
         }
         
@@ -154,6 +173,7 @@
           var payload = {
             remito_id: remitoCompleto,
             subestado_id: estadoId,
+            chofer: chofer,
             fotoBase64: fotoBase64 || "",
             fotoNombre: fotoNombre || ""
           };

@@ -1,1 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Control de Remitos - Top Neumáticos</title>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #f4f6f9; }
+      .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; text-align: left; }
+      h2 { color: #333; margin-top: 0; font-size: 22px; text-align: center; }
+      p { color: #666; font-size: 14px; text-align: center; }
+      label { font-weight: bold; color: #444; font-size: 14px; display: block; margin-top: 15px; }
+      .input-container { display: flex; align-items: center; margin-top: 5px; }
+      .prefix { font-weight: bold; color: #555; background: #e9ecef; padding: 15px 10px 15px 15px; border: 1px solid #ccc; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; }
+      input[type="number"], select { width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ccc; font-weight: bold; box-sizing: border-box; border-top-right-radius: 8px; border-bottom-right-radius: 8px; background-color: #fff; }
+      select { border-radius: 8px; }
+      .foto-section { background: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+      input[type="file"] { width: 100%; margin-top: 5px; }
+      .btn-enviar { width: 100%; padding: 15px; margin-top: 20px; font-size: 16px; font-weight: bold; border-radius: 8px; background-color: #7209b7; color: white; border: none; cursor: pointer; transition: background 0.2s; }
+      .btn-enviar:active { background-color: #56038a; }
+      #mensaje { margin-top: 18px; font-weight: bold; font-size: 15px; text-align: center; }
+      .exito { color: #2bc016; }
+      .error { color: #dc3545; }
+      .procesando { color: #ffaa00; }
+    </style>
+  </head>
+  <body>
 
+    <div class="card">
+      <h2>📦 Control de Remitos</h2>
+      <p>Gestión de estados para logística</p>
+      
+      <form id="formRemito">
+        <label>1. Número de Remito:</label>
+        <div class="input-container">
+          <span class="prefix">DePos/OUT/</span>
+          <input type="number" id="remito_num" name="remito_num" placeholder="Ej: 06997" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
+        </div>
+        
+        <label>2. Seleccionar Estado:</label>
+        <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
+          <option value="2">🚚 En viaje hacia cliente</option>
+          <option value="3">✅ Entrega Final</option>
+        </select>
+        
+        <!-- Sección dinámica para la foto -->
+        <div id="seccion_foto" class="foto-section">
+          <label style="margin-top:0; color: #856404;">📸 Adjuntar Remito Firmado (Obligatorio):</label>
+          <input type="file" id="foto_remito" name="foto" accept="image/*" capture="environment">
+        </div>
+        
+        <button type="button" class="btn-enviar" onclick="validarYEnviar()">🚀 ACTUALIZAR ESTADO</button>
+      </form>
+      
+      <div id="mensaje"></div>
+    </div>
+
+    <script>
+      function evaluarEstado() {
+        var estado = document.getElementById('subestado_id').value;
+        var seccionFoto = document.getElementById('seccion_foto');
+        if (estado === "3") {
+          seccionFoto.style.display = "block";
+        } else {
+          seccionFoto.style.display = "none";
+          document.getElementById('foto_remito').value = "";
+        }
+      }
+
+      function validarYEnviar() {
+        var numInput = document.getElementById('remito_num').value.trim();
+        var estadoId = document.getElementById('subestado_id').value;
+        var archivoFoto = document.getElementById('foto_remito').files[0];
+        
+        if(!numInput) {
+          mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
+          return;
+        }
+        
+        var numFormateado = numInput.padStart(5, '0');
+        var remitoCompleto = "DePos/OUT/" + numFormateado;
+        
+        if (estadoId === "3" && !archivoFoto) {
+          mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
+          return;
+        }
+        
+        mostrarMensaje('Enviando datos a n8n... ⏳', 'procesando');
+
+        // Usamos FormData para enviar el archivo binario nativo, evitando que n8n se rompa por JSON pesado
+        var formData = new FormData();
+        formData.append("remito_id", remitoCompleto);
+        formData.append("subestado_id", estadoId);
+        if (archivoFoto) {
+          formData.append("file", archivoFoto, remitoFormateado + ".jpg");
+        }
+
+        // ⚠️ REEMPLAZÁ ACÁ CON TU URL DE NGROK
+        var urlWebhook = "https://envy-recollect-last.ngrok-free.dev/webhook-test/cambiar-subestado";
+
+        fetch(urlWebhook, {
+          method: "POST",
+          body: formData
+        })
+        .then(response => {
+          if(response.ok) {
+            mostrarMensaje('¡Odoo actualizado con éxito! ✅', 'exito');
+            document.getElementById('formRemito').reset();
+            evaluarEstado();
+          } else {
+            mostrarMensaje('❌ Error en el servidor de n8n.', 'error');
+          }
+        })
+        .catch(error => {
+          console.error(error);
+          mostrarMensaje('❌ Error al conectar con n8n.', 'error');
+        });
+      }
+
+      function mostrarMensaje(texto, clase) {
+        var msgDiv = document.getElementById('mensaje');
+        msgDiv.innerText = texto;
+        msgDiv.className = clase;
+      }
+    </script>
+  </body>
+</html>

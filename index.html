@@ -4,30 +4,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Control de Remitos - Top Neumáticos</title>
     <style>
-      body { font-family: Arial, sans-serif; padding: 20px; text-align: center; background-color: #f4f6f9; }
-      .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; text-align: left; }
-      h2 { color: #333; margin-top: 0; font-size: 22px; text-align: center; }
-      p { color: #666; font-size: 14px; text-align: center; }
-      label { font-weight: bold; color: #444; font-size: 14px; display: block; margin-top: 15px; }
+      body { 
+        font-family: Arial, sans-serif; 
+        padding: 0; 
+        margin: 0;
+        text-align: center; 
+        /* Fondo con camiones de logística usando Unsplash */
+        background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=1200') no-repeat center center fixed;
+        background-size: cover;
+      }
+      
+      /* Banner Superior Corporativo */
+      .banner {
+        background-color: #000000;
+        border-bottom: 5px solid #d90429; /* Rojo vibrante */
+        padding: 15px;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      }
+      .banner span {
+        color: #d90429; /* Detalle en rojo para el "Top" */
+      }
+
+      .card { 
+        background: rgba(255, 255, 255, 0.95); 
+        padding: 25px; 
+        border-radius: 12px; 
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4); 
+        max-width: 400px; 
+        margin: 40px auto 20px auto; 
+        text-align: left;
+        border-top: 4px solid #000000;
+      }
+      h2 { color: #111; margin-top: 0; font-size: 20px; text-align: center; font-weight: bold; }
+      p { color: #555; font-size: 14px; text-align: center; margin-bottom: 20px; font-weight: 500; }
+      label { font-weight: bold; color: #222; font-size: 14px; display: block; margin-top: 15px; }
+      
       .input-container { display: flex; align-items: center; margin-top: 5px; }
-      .prefix { font-weight: bold; color: #555; background: #e9ecef; padding: 15px 10px 15px 15px; border: 1px solid #ccc; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; }
+      .prefix { font-weight: bold; color: #fff; background: #222; padding: 15px 10px 15px 15px; border: 1px solid #000; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; }
+      
       input[type="number"], select { width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ccc; font-weight: bold; box-sizing: border-box; border-top-right-radius: 8px; border-bottom-right-radius: 8px; background-color: #fff; }
-      select { border-radius: 8px; }
+      select { border-radius: 8px; border: 1px solid #ccc; }
+      
       .foto-section { background: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
       input[type="file"] { width: 100%; margin-top: 5px; }
-      .btn-enviar { width: 100%; padding: 15px; margin-top: 20px; font-size: 16px; font-weight: bold; border-radius: 8px; background-color: #7209b7; color: white; border: none; cursor: pointer; transition: background 0.2s; }
-      .btn-enviar:active { background-color: #56038a; }
+      
+      /* Botón de Enviar - Rojo de Top Neumáticos */
+      .btn-enviar { width: 100%; padding: 15px; margin-top: 25px; font-size: 16px; font-weight: bold; border-radius: 8px; background-color: #d90429; color: white; border: none; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px rgba(217, 4, 41, 0.3); }
+      .btn-enviar:active { background-color: #b00220; }
+      
       #mensaje { margin-top: 18px; font-weight: bold; font-size: 15px; text-align: center; }
-      .exito { color: #2bc016; }
+      .exito { color: #1b9e09; }
       .error { color: #dc3545; }
-      .procesando { color: #ffaa00; }
+      .procesando { color: #b87a00; }
     </style>
   </head>
   <body>
 
+    <!-- Banner Superior -->
+    <div class="banner">
+      <span>TOP</span> NEUMÁTICOS
+    </div>
+
     <div class="card">
       <h2>📦 Control de Remitos</h2>
-      <p>Gestión de estados para logística</p>
+      <p>Gestión de estados para logística interna</p>
       
       <form id="formRemito">
         <label>1. Número de Remito:</label>
@@ -86,15 +131,14 @@
         
         mostrarMensaje('Enviando datos a n8n... ⏳', 'procesando');
 
-        // Usamos FormData para enviar el archivo binario nativo, evitando que n8n se rompa por JSON pesado
         var formData = new FormData();
         formData.append("remito_id", remitoCompleto);
         formData.append("subestado_id", estadoId);
         if (archivoFoto) {
-          formData.append("file", archivoFoto, remitoFormateado + ".jpg");
+          formData.append("file", archivoFoto, numFormateado + ".jpg");
         }
 
-        // ⚠️ REEMPLAZÁ ACÁ CON TU URL DE NGROK
+        // ⚠️ REEMPLAZÁ ACÁ CON TU URL DE NGROK ACTUAL
         var urlWebhook = "https://envy-recollect-last.ngrok-free.dev/webhook-test/cambiar-subestado";
 
         fetch(urlWebhook, {

@@ -45,7 +45,7 @@
       label { font-weight: bold; color: #222; font-size: 14px; display: block; margin-top: 15px; }
       
       .input-container { display: flex; align-items: center; margin-top: 5px; }
-      .prefix { font-weight: bold; color: #fff; background: #222; padding: 15px 10px 15px 15px; border: 1px solid #000; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; }
+      .prefix { font-weight: bold; color: #fff; background: #222; padding: 15px 10px 15px 15px; border: 1px solid #000; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; white-space: nowrap; }
       
       input[type="number"], select { width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ccc; font-weight: bold; box-sizing: border-box; border-top-right-radius: 8px; border-bottom-right-radius: 8px; background-color: #fff; }
       select { border-radius: 8px; border: 1px solid #ccc; }
@@ -76,13 +76,19 @@
       <p>Gestión de estados para logística interna</p>
       
       <form id="formRemito">
-        <label>1. Número de Remito:</label>
+        <label>1. Depósito de origen:</label>
+        <select id="deposito" name="deposito" onchange="actualizarPrefijo()" required>
+          <option value="DePos/OUT/">Posadas</option>
+          <option value="DCtes/OUT/">Corrientes</option>
+        </select>
+
+        <label>2. Número de Remito:</label>
         <div class="input-container">
-          <span class="prefix">DePos/OUT/</span>
+          <span class="prefix" id="prefijoRemito">DePos/OUT/</span>
           <input type="number" id="remito_num" name="remito_num" placeholder="Ej: 06997" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
         </div>
         
-        <label>2. Usuario:</label>
+        <label>3. Usuario:</label>
         <select id="usuario" name="usuario" required>
           <option value="" disabled selected>Seleccioná tu nombre</option>
           <option value="Hermes Diego">Hermes Diego</option>
@@ -94,9 +100,10 @@
           <option value="Sanabria Julio">Sanabria Julio</option>
           <option value="Alejandro Garcia">Alejandro Garcia</option>
           <option value="Talavera Lucas">Talavera Lucas</option>
+          <option value="Favio Rollet">Favio Rollet</option>
         </select>
 
-        <label>3. Seleccionar Estado:</label>
+        <label>4. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
           <option value="2">🚚 En viaje hacia cliente</option>
           <option value="3">✅ Entrega Final</option>
@@ -116,6 +123,11 @@
 
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
+
+      function actualizarPrefijo() {
+        var prefijo = document.getElementById('deposito').value;
+        document.getElementById('prefijoRemito').innerText = prefijo;
+      }
 
       function evaluarEstado() {
         var estado = document.getElementById('subestado_id').value;
@@ -143,6 +155,7 @@
       }
 
       function validarYEnviar() {
+        var prefijo = document.getElementById('deposito').value;
         var numInput = document.getElementById('remito_num').value.trim();
         var usuario = document.getElementById('usuario').value;
         var estadoId = document.getElementById('subestado_id').value;
@@ -160,7 +173,7 @@
         }
         
         var numFormateado = numInput.padStart(5, '0');
-        var remitoCompleto = "DePos/OUT/" + numFormateado;
+        var remitoCompleto = prefijo + numFormateado;
         
         if (estadoId === "3" && !archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
@@ -195,6 +208,7 @@
             btn.disabled = false;
             mostrarMensaje('¡Datos enviados! Verificá en Odoo. ✅', 'exito');
             document.getElementById('formRemito').reset();
+            actualizarPrefijo();
             evaluarEstado();
           })
           .catch(function(error) {

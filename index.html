@@ -9,15 +9,13 @@
         padding: 0; 
         margin: 0;
         text-align: center; 
-        /* Fondo con camiones de logística usando Unsplash */
         background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=1200') no-repeat center center fixed;
         background-size: cover;
       }
       
-      /* Banner Superior Corporativo */
       .banner {
         background-color: #000000;
-        border-bottom: 5px solid #d90429; /* Rojo vibrante */
+        border-bottom: 5px solid #d90429;
         padding: 15px;
         color: white;
         font-size: 24px;
@@ -27,7 +25,7 @@
         box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       }
       .banner span {
-        color: #d90429; /* Detalle en rojo para el "Top" */
+        color: #d90429;
       }
 
       .card { 
@@ -53,7 +51,6 @@
       .foto-section { background: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
       input[type="file"] { width: 100%; margin-top: 5px; }
       
-      /* Botón de Enviar - Rojo de Top Neumáticos */
       .btn-enviar { width: 100%; padding: 15px; margin-top: 25px; font-size: 16px; font-weight: bold; border-radius: 8px; background-color: #d90429; color: white; border: none; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px rgba(217, 4, 41, 0.3); }
       .btn-enviar:active { background-color: #b00220; }
       .btn-enviar:disabled { background-color: #999; cursor: not-allowed; box-shadow: none; }
@@ -66,7 +63,6 @@
   </head>
   <body>
 
-    <!-- Banner Superior -->
     <div class="banner">
       <span>TOP</span> NEUMÁTICOS
     </div>
@@ -76,10 +72,14 @@
       <p>Gestión de estados para logística interna</p>
       
       <form id="formRemito">
-        <label>1. Depósito de origen:</label>
-        <select id="deposito" name="deposito" onchange="actualizarPrefijo()" required>
-          <option value="DePos/OUT/">Posadas</option>
-          <option value="DCtes/OUT/">Corrientes</option>
+        <label>1. Usuario:</label>
+        <select id="usuario" name="usuario" onchange="actualizarPrefijo()" required>
+          <option value="" disabled>Seleccioná tu nombre</option>
+          <option value="Hermes Diego">Hermes Diego</option>
+          <option value="Alexander Ayala">Alexander Ayala</option>
+          <option value="Vera Matias">Vera Matias</option>
+          <option value="Tagliabue Fabrizio">Tagliabue Fabrizio</option>
+          <option value="Favio Rollet">Favio Rollet</option>
         </select>
 
         <label>2. Número de Remito:</label>
@@ -87,29 +87,13 @@
           <span class="prefix" id="prefijoRemito">DePos/OUT/</span>
           <input type="number" id="remito_num" name="remito_num" placeholder="Ej: 06997" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
         </div>
-        
-        <label>3. Usuario:</label>
-        <select id="usuario" name="usuario" required>
-          <option value="" disabled selected>Seleccioná tu nombre</option>
-          <option value="Hermes Diego">Hermes Diego</option>
-          <option value="Tagliabue Fabrizio">Tagliabue Fabrizio</option>
-          <option value="Alexander Ayala">Alexander Ayala</option>
-          <option value="Vera Matias">Vera Matias</option>
-          <option value="Alexis Silva">Alexis Silva</option>
-          <option value="Jorge Lub">Jorge Lub</option>
-          <option value="Sanabria Julio">Sanabria Julio</option>
-          <option value="Alejandro Garcia">Alejandro Garcia</option>
-          <option value="Talavera Lucas">Talavera Lucas</option>
-          <option value="Favio Rollet">Favio Rollet</option>
-        </select>
 
-        <label>4. Seleccionar Estado:</label>
+        <label>3. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
           <option value="2">🚚 En viaje hacia cliente</option>
           <option value="3">✅ Entrega Final</option>
         </select>
         
-        <!-- Sección dinámica para la foto -->
         <div id="seccion_foto" class="foto-section">
           <label style="margin-top:0; color: #856404;">📸 Adjuntar Remito Firmado (Obligatorio):</label>
           <input type="file" id="foto_remito" name="foto" accept="image/*" capture="environment">
@@ -124,8 +108,18 @@
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
+      // Mapeo usuario -> depósito
+      var depositoPorUsuario = {
+        "Hermes Diego": "DePos/OUT/",
+        "Alexander Ayala": "DePos/OUT/",
+        "Vera Matias": "DePos/OUT/",
+        "Tagliabue Fabrizio": "DePos/OUT/",
+        "Favio Rollet": "DCtes/OUT/"
+      };
+
       function actualizarPrefijo() {
-        var prefijo = document.getElementById('deposito').value;
+        var usuario = document.getElementById('usuario').value;
+        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
         document.getElementById('prefijoRemito').innerText = prefijo;
       }
 
@@ -146,7 +140,7 @@
           var lector = new FileReader();
           lector.onload = function() {
             var resultado = lector.result;
-            var base64 = resultado.split(',')[1]; // quitamos "data:image/jpeg;base64,"
+            var base64 = resultado.split(',')[1];
             resolve(base64);
           };
           lector.onerror = function(error) { reject(error); };
@@ -155,23 +149,23 @@
       }
 
       function validarYEnviar() {
-        var prefijo = document.getElementById('deposito').value;
-        var numInput = document.getElementById('remito_num').value.trim();
         var usuario = document.getElementById('usuario').value;
+        var numInput = document.getElementById('remito_num').value.trim();
         var estadoId = document.getElementById('subestado_id').value;
         var archivoFoto = document.getElementById('foto_remito').files[0];
         var btn = document.getElementById('btnEnviar');
-        
-        if(!numInput) {
-          mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
-          return;
-        }
 
         if(!usuario) {
           mostrarMensaje('⚠️ Por favor, seleccioná el usuario.', 'error');
           return;
         }
+
+        if(!numInput) {
+          mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
+          return;
+        }
         
+        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
         
@@ -192,9 +186,6 @@
             fotoNombre: fotoNombre || ""
           };
 
-          // mode: "no-cors" -> Apps Script no devuelve headers CORS legibles,
-          // así que no podemos leer la respuesta, pero la request SÍ llega
-          // y el backend SÍ ejecuta (sube a Drive + avisa a n8n).
           fetch(urlAppsScript, {
             method: "POST",
             mode: "no-cors",
@@ -202,12 +193,16 @@
             body: JSON.stringify(payload)
           })
           .then(function() {
-            // No podemos confirmar el resultado real por el bloqueo de CORS,
-            // así que asumimos éxito. Si falla algo del lado del servidor,
-            // revisar Executions en Apps Script.
             btn.disabled = false;
             mostrarMensaje('¡Datos enviados! Verificá en Odoo. ✅', 'exito');
-            document.getElementById('formRemito').reset();
+
+            // Guardamos el usuario para la próxima carga, y reseteamos solo remito/estado/foto
+            var usuarioActual = usuario;
+            document.getElementById('remito_num').value = "";
+            document.getElementById('subestado_id').value = "2";
+            document.getElementById('foto_remito').value = "";
+            document.getElementById('usuario').value = usuarioActual;
+            localStorage.setItem('ultimoUsuario', usuarioActual);
             actualizarPrefijo();
             evaluarEstado();
           })
@@ -237,6 +232,15 @@
         msgDiv.innerText = texto;
         msgDiv.className = clase;
       }
+
+      // Al cargar la página, recuperamos el último usuario usado (si lo hay)
+      window.onload = function() {
+        var ultimo = localStorage.getItem('ultimoUsuario');
+        if (ultimo) {
+          document.getElementById('usuario').value = ultimo;
+        }
+        actualizarPrefijo();
+      };
     </script>
   </body>
 </html>

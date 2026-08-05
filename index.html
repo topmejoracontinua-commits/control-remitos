@@ -91,6 +91,7 @@
         <label>3. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
           <option value="2">🚚 En viaje hacia cliente</option>
+          <option value="4">🏭 Entrega depósito</option>
           <option value="3">✅ Entrega Final</option>
         </select>
         
@@ -107,6 +108,9 @@
 
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
+
+      // Estados que requieren foto obligatoria
+      var estadosConFoto = ["3", "4"];
 
       // Mapeo usuario -> depósito
       var depositoPorUsuario = {
@@ -126,7 +130,7 @@
       function evaluarEstado() {
         var estado = document.getElementById('subestado_id').value;
         var seccionFoto = document.getElementById('seccion_foto');
-        if (estado === "3") {
+        if (estadosConFoto.indexOf(estado) !== -1) {
           seccionFoto.style.display = "block";
         } else {
           seccionFoto.style.display = "none";
@@ -169,7 +173,7 @@
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
         
-        if (estadoId === "3" && !archivoFoto) {
+        if (estadosConFoto.indexOf(estadoId) !== -1 && !archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
           return;
         }

@@ -90,7 +90,6 @@
 
         <label>3. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
-          <option value="2">🚚 En viaje hacia cliente</option>
           <option value="4">🏭 Entrega depósito</option>
           <option value="3">✅ Entrega Final</option>
         </select>
@@ -109,9 +108,6 @@
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
-      // Estados que requieren foto obligatoria
-      var estadosConFoto = ["3", "4"];
-
       // Mapeo usuario -> depósito
       var depositoPorUsuario = {
         "Hermes Diego": "DePos/OUT/",
@@ -128,14 +124,8 @@
       }
 
       function evaluarEstado() {
-        var estado = document.getElementById('subestado_id').value;
-        var seccionFoto = document.getElementById('seccion_foto');
-        if (estadosConFoto.indexOf(estado) !== -1) {
-          seccionFoto.style.display = "block";
-        } else {
-          seccionFoto.style.display = "none";
-          document.getElementById('foto_remito').value = "";
-        }
+        // Los dos estados disponibles (Entrega depósito y Entrega Final) requieren foto
+        document.getElementById('seccion_foto').style.display = "block";
       }
 
       // Convierte un File a base64 puro (sin el prefijo data:...;base64,)
@@ -173,7 +163,7 @@
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
         
-        if (estadosConFoto.indexOf(estadoId) !== -1 && !archivoFoto) {
+        if (!archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
           return;
         }
@@ -203,7 +193,7 @@
             // Guardamos el usuario para la próxima carga, y reseteamos solo remito/estado/foto
             var usuarioActual = usuario;
             document.getElementById('remito_num').value = "";
-            document.getElementById('subestado_id').value = "2";
+            document.getElementById('subestado_id').value = "4";
             document.getElementById('foto_remito').value = "";
             document.getElementById('usuario').value = usuarioActual;
             localStorage.setItem('ultimoUsuario', usuarioActual);
@@ -244,6 +234,7 @@
           document.getElementById('usuario').value = ultimo;
         }
         actualizarPrefijo();
+        evaluarEstado();
       };
     </script>
   </body>

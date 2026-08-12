@@ -80,7 +80,21 @@
           <option value="Vera Matias">Vera Matias</option>
           <option value="Tagliabue Fabrizio">Tagliabue Fabrizio</option>
           <option value="Favio Rollet">Favio Rollet</option>
+          <option value="Lucas Talavera">Lucas Talavera</option>
+          <option value="Lubaczewski Jorge">Lubaczewski Jorge</option>
+          <option value="Sanabria Julio">Sanabria Julio</option>
+          <option value="Alejandro Garcia">Alejandro Garcia</option>
+          <option value="Alexis Silva">Alexis Silva</option>
         </select>
+
+        <div id="seccion_deposito_manual" style="display:none; margin-top:15px;">
+          <label style="margin-top:0;">Depósito:</label>
+          <select id="deposito_manual" onchange="actualizarPrefijo()">
+            <option value="" selected disabled>Seleccioná depósito</option>
+            <option value="DePos/OUT/">Posadas</option>
+            <option value="DCtes/OUT/">Corrientes</option>
+          </select>
+        </div>
 
         <label>2. Número de Remito:</label>
         <div class="input-container">
@@ -90,7 +104,7 @@
 
         <label>3. Seleccionar Estado:</label>
         <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
-          <option value="2">🚚 En viaje hacia cliente</option>
+          <option value="4">🏭 Entrega depósito</option>
           <option value="3">✅ Entrega Final</option>
         </select>
         
@@ -108,30 +122,43 @@
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
-      // Mapeo usuario -> depósito
+      // Mapeo usuario -> depósito (automático)
       var depositoPorUsuario = {
         "Hermes Diego": "DePos/OUT/",
         "Alexander Ayala": "DePos/OUT/",
         "Vera Matias": "DePos/OUT/",
         "Tagliabue Fabrizio": "DePos/OUT/",
-        "Favio Rollet": "DCtes/OUT/"
+        "Favio Rollet": "DCtes/OUT/",
+        "Lubaczewski Jorge": "DePos/OUT/",
+        "Sanabria Julio": "DePos/OUT/",
+        "Alexis Silva": "DePos/OUT/"
       };
+
+      // Usuarios que reparten en ambos depósitos: para ellos el depósito se elige a mano
+      var usuariosDepositoManual = ["Lucas Talavera", "Alejandro Garcia"];
+
+      function obtenerPrefijoActual() {
+        var usuario = document.getElementById('usuario').value;
+        if (usuariosDepositoManual.indexOf(usuario) !== -1) {
+          return document.getElementById('deposito_manual').value;
+        }
+        return depositoPorUsuario[usuario] || "DePos/OUT/";
+      }
 
       function actualizarPrefijo() {
         var usuario = document.getElementById('usuario').value;
-        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
-        document.getElementById('prefijoRemito').innerText = prefijo;
+        var seccionManual = document.getElementById('seccion_deposito_manual');
+        if (usuariosDepositoManual.indexOf(usuario) !== -1) {
+          seccionManual.style.display = "block";
+        } else {
+          seccionManual.style.display = "none";
+        }
+        document.getElementById('prefijoRemito').innerText = obtenerPrefijoActual();
       }
 
       function evaluarEstado() {
-        var estado = document.getElementById('subestado_id').value;
-        var seccionFoto = document.getElementById('seccion_foto');
-        if (estado === "3") {
-          seccionFoto.style.display = "block";
-        } else {
-          seccionFoto.style.display = "none";
-          document.getElementById('foto_remito').value = "";
-        }
+        // Los dos estados disponibles (Entrega depósito y Entrega Final) requieren foto
+        document.getElementById('seccion_foto').style.display = "block";
       }
 
       // Convierte un File a base64 puro (sin el prefijo data:...;base64,)
@@ -160,16 +187,21 @@
           return;
         }
 
+        if(usuariosDepositoManual.indexOf(usuario) !== -1 && !document.getElementById('deposito_manual').value) {
+          mostrarMensaje('⚠️ Por favor, seleccioná el depósito (Posadas o Corrientes).', 'error');
+          return;
+        }
+
         if(!numInput) {
           mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
           return;
         }
         
-        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
+        var prefijo = obtenerPrefijoActual();
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
         
-        if (estadoId === "3" && !archivoFoto) {
+        if (!archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
           return;
         }
@@ -199,7 +231,7 @@
             // Guardamos el usuario para la próxima carga, y reseteamos solo remito/estado/foto
             var usuarioActual = usuario;
             document.getElementById('remito_num').value = "";
-            document.getElementById('subestado_id').value = "2";
+            document.getElementById('subestado_id').value = "4";
             document.getElementById('foto_remito').value = "";
             document.getElementById('usuario').value = usuarioActual;
             localStorage.setItem('ultimoUsuario', usuarioActual);
@@ -240,6 +272,7 @@
           document.getElementById('usuario').value = ultimo;
         }
         actualizarPrefijo();
+        evaluarEstado();
       };
     </script>
   </body>

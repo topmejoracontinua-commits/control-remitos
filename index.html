@@ -1,327 +1,246 @@
 <!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Control de Cheques Rechazados</title>
-<style>
-  :root {
-    --navy: #0f172a;
-    --navy-2: #1e293b;
-    --blue: #3b82f6;
-    --blue-dark: #2563eb;
-    --bg: #eef1f6;
-    --ink: #1e293b;
-    --muted: #64748b;
-    --red: #dc2626;
-    --green: #059669;
-  }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    font-family: 'Segoe UI', Arial, sans-serif;
-    color: var(--ink);
-    padding: 24px;
-  }
-  .card {
-    width: 100%;
-    max-width: 480px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(15,23,42,.08);
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-  }
-  .card-header {
-    background: linear-gradient(135deg, var(--navy), var(--navy-2));
-    color: #fff;
-    padding: 28px 32px;
-    border-bottom: 4px solid var(--blue);
-  }
-  .card-header h1 {
-    margin: 0;
-    font-size: 21px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-  }
-  .card-header p {
-    margin: 6px 0 0;
-    font-size: 13px;
-    color: #94a3b8;
-  }
-  .card-body {
-    padding: 32px;
-    text-align: center;
-  }
-  #btnGenerar {
-    width: 100%;
-    padding: 14px 20px;
-    font-size: 15px;
-    font-weight: 700;
-    color: #fff;
-    background: var(--blue);
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: background .15s;
-  }
-  #btnGenerar:hover:not(:disabled) { background: var(--blue-dark); }
-  .dropzones {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 20px;
-  }
-  .dropzone {
-    flex: 1;
-    border: 2px dashed #cbd5e1;
-    border-radius: 10px;
-    padding: 18px 10px;
-    text-align: center;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-  }
-  .dropzone:hover, .dropzone.dragover {
-    border-color: var(--blue);
-    background: #eff6ff;
-  }
-  .dropzone.completo {
-    border-color: var(--green);
-    background: #ecfdf5;
-    border-style: solid;
-  }
-  .dropzone .banco-nombre {
-    font-weight: 700;
-    font-size: 13px;
-    color: var(--ink);
-  }
-  .dropzone .archivo-info {
-    margin-top: 6px;
-    font-size: 11.5px;
-    color: var(--muted);
-    word-break: break-all;
-  }
-  .dropzone input[type="file"] { display: none; }
-
-  #btnGenerar:disabled { background: #cbd5e1; cursor: not-allowed; }
-
-  #estado { margin-top: 22px; display: none; }
-  #estado.visible { display: block; }
-
-  .spinner {
-    width: 36px;
-    height: 36px;
-    margin: 0 auto 14px;
-    border: 4px solid #dbeafe;
-    border-top-color: var(--blue);
-    border-radius: 50%;
-    animation: girar 0.9s linear infinite;
-  }
-  @keyframes girar { to { transform: rotate(360deg); } }
-
-  #mensajeEstado {
-    font-size: 14px;
-    color: var(--muted);
-    line-height: 1.5;
-  }
-  #cronometro {
-    font-variant-numeric: tabular-nums;
-    font-weight: 700;
-    color: var(--ink);
-  }
-
-  .resultado {
-    margin-top: 18px;
-    padding: 16px;
-    border-radius: 10px;
-    font-size: 14px;
-    text-align: left;
-    display: none;
-  }
-  .resultado.visible { display: block; }
-  .resultado.ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
-  .resultado.error { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
-
-  .resultado a.abrir-link {
-    display: inline-block;
-    margin-top: 10px;
-    color: var(--blue-dark);
-    font-weight: 700;
-    text-decoration: none;
-  }
-  .resultado a.abrir-link:hover { text-decoration: underline; }
-
-  .footer-nota {
-    margin-top: 20px;
-    font-size: 12px;
-    color: #94a3b8;
-  }
-</style>
-</head>
-<body>
-
-<div class="card">
-  <div class="card-header">
-    <h1>Control de Cheques Rechazados</h1>
-    <p>Cruce entre extracto bancario y líneas cargadas en Odoo</p>
-  </div>
-  <div class="card-body">
-    <div class="dropzones">
-      <label class="dropzone" id="dropGalicia" for="fileGalicia">
-        <div class="banco-nombre">📄 Extracto Galicia</div>
-        <div class="archivo-info" id="infoGalicia">Arrastrá o tocá para elegir</div>
-        <input type="file" id="fileGalicia" accept=".xlsx,.xls">
-      </label>
-      <label class="dropzone" id="dropFrances" for="fileFrances">
-        <div class="banco-nombre">📄 Extracto Francés</div>
-        <div class="archivo-info" id="infoFrances">Arrastrá o tocá para elegir</div>
-        <input type="file" id="fileFrances" accept=".xlsx,.xls">
-      </label>
-    </div>
-
-    <button id="btnGenerar" onclick="generarReporte()" disabled>Generar reporte actualizado</button>
-
-    <div id="estado">
-      <div class="spinner"></div>
-      <div id="mensajeEstado">
-        Corriendo el cruce contra Odoo y los extractos bancarios...<br>
-        Esto tarda entre 3 y 4 minutos. No cierres esta pestaña.
-      </div>
-      <div style="margin-top:10px;">⏱ <span id="cronometro">00:00</span></div>
-    </div>
-
-    <div id="resultado" class="resultado"></div>
-
-    <div class="footer-nota">Top Neumáticos S.R.L.</div>
-  </div>
-</div>
-
-<script>
-  // ⚠️ Si el link de ngrok cambia, actualizar acá:
-  const WEBHOOK_URL = "https://envy-recollect-last.ngrok-free.dev/webhook/cheques-rechazados";
-
-  let archivoGalicia = null;
-  let archivoFrances = null;
-
-  function setupDropzone(dropId, inputId, infoId, onFile) {
-    const drop = document.getElementById(dropId);
-    const input = document.getElementById(inputId);
-    const info = document.getElementById(infoId);
-
-    input.addEventListener('change', () => {
-      if (input.files[0]) onFile(input.files[0]);
-    });
-
-    drop.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      drop.classList.add('dragover');
-    });
-    drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
-    drop.addEventListener('drop', (e) => {
-      e.preventDefault();
-      drop.classList.remove('dragover');
-      if (e.dataTransfer.files[0]) onFile(e.dataTransfer.files[0]);
-    });
-
-    return { drop, info };
-  }
-
-  function actualizarBoton() {
-    document.getElementById('btnGenerar').disabled = !(archivoGalicia && archivoFrances);
-  }
-
-  const zGalicia = setupDropzone('dropGalicia', 'fileGalicia', 'infoGalicia', (file) => {
-    archivoGalicia = file;
-    zGalicia.info.textContent = file.name;
-    zGalicia.drop.classList.add('completo');
-    actualizarBoton();
-  });
-
-  const zFrances = setupDropzone('dropFrances', 'fileFrances', 'infoFrances', (file) => {
-    archivoFrances = file;
-    zFrances.info.textContent = file.name;
-    zFrances.drop.classList.add('completo');
-    actualizarBoton();
-  });
-
-  let intervaloReloj = null;
-  let segundos = 0;
-
-  function formatearTiempo(s) {
-    const m = Math.floor(s / 60).toString().padStart(2, '0');
-    const ss = (s % 60).toString().padStart(2, '0');
-    return m + ':' + ss;
-  }
-
-  async function generarReporte() {
-    const btn = document.getElementById('btnGenerar');
-    const estado = document.getElementById('estado');
-    const resultado = document.getElementById('resultado');
-
-    btn.disabled = true;
-    btn.textContent = 'Generando...';
-    resultado.classList.remove('visible', 'ok', 'error');
-    resultado.innerHTML = '';
-    estado.classList.add('visible');
-
-    segundos = 0;
-    document.getElementById('cronometro').textContent = formatearTiempo(segundos);
-    intervaloReloj = setInterval(() => {
-      segundos++;
-      document.getElementById('cronometro').textContent = formatearTiempo(segundos);
-    }, 1000);
-
-    try {
-      const formData = new FormData();
-      formData.append('galicia', archivoGalicia);
-      formData.append('frances', archivoFrances);
-
-      const resp = await fetch(WEBHOOK_URL, {
-        method: 'POST',
-        headers: {
-          'ngrok-skip-browser-warning': 'true'
-        },
-        body: formData
-      });
-
-      if (!resp.ok) {
-        throw new Error('El servidor respondió con error ' + resp.status);
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Control de Remitos - Top Neumáticos</title>
+    <style>
+      body { 
+        font-family: Arial, sans-serif; 
+        padding: 0; 
+        margin: 0;
+        text-align: center; 
+        background: linear-gradient(rgba(0, 0, 0, 0.65), rgba(0, 0, 0, 0.65)), url('https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=1200') no-repeat center center fixed;
+        background-size: cover;
+      }
+      
+      .banner {
+        background-color: #000000;
+        border-bottom: 5px solid #d90429;
+        padding: 15px;
+        color: white;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      }
+      .banner span {
+        color: #d90429;
       }
 
-      const blob = await resp.blob();
-      const url = URL.createObjectURL(blob);
+      .card { 
+        background: rgba(255, 255, 255, 0.95); 
+        padding: 25px; 
+        border-radius: 12px; 
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4); 
+        max-width: 400px; 
+        margin: 40px auto 20px auto; 
+        text-align: left;
+        border-top: 4px solid #000000;
+      }
+      h2 { color: #111; margin-top: 0; font-size: 20px; text-align: center; font-weight: bold; }
+      p { color: #555; font-size: 14px; text-align: center; margin-bottom: 20px; font-weight: 500; }
+      label { font-weight: bold; color: #222; font-size: 14px; display: block; margin-top: 15px; }
+      
+      .input-container { display: flex; align-items: center; margin-top: 5px; }
+      .prefix { font-weight: bold; color: #fff; background: #222; padding: 15px 10px 15px 15px; border: 1px solid #000; border-right: none; border-top-left-radius: 8px; border-bottom-left-radius: 8px; font-size: 16px; white-space: nowrap; }
+      
+      input[type="number"], select { width: 100%; padding: 15px; font-size: 16px; border: 1px solid #ccc; font-weight: bold; box-sizing: border-box; border-top-right-radius: 8px; border-bottom-right-radius: 8px; background-color: #fff; }
+      select { border-radius: 8px; border: 1px solid #ccc; }
+      
+      .foto-section { background: #fff3cd; border: 1px dashed #ffc107; padding: 15px; border-radius: 8px; margin-top: 15px; display: none; }
+      input[type="file"] { width: 100%; margin-top: 5px; }
+      
+      .btn-enviar { width: 100%; padding: 15px; margin-top: 25px; font-size: 16px; font-weight: bold; border-radius: 8px; background-color: #d90429; color: white; border: none; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 6px rgba(217, 4, 41, 0.3); }
+      .btn-enviar:active { background-color: #b00220; }
+      .btn-enviar:disabled { background-color: #999; cursor: not-allowed; box-shadow: none; }
+      
+      #mensaje { margin-top: 18px; font-weight: bold; font-size: 15px; text-align: center; }
+      .exito { color: #1b9e09; }
+      .error { color: #dc3545; }
+      .procesando { color: #b87a00; }
+    </style>
+  </head>
+  <body>
 
-      estado.classList.remove('visible');
-      resultado.classList.add('visible', 'ok');
-      resultado.innerHTML =
-        '✅ Reporte generado (tardó ' + formatearTiempo(segundos) + ').<br>' +
-        'Si no se abrió solo, tocá el link:<br>' +
-        '<a class="abrir-link" href="' + url + '" target="_blank" rel="noopener">Abrir reporte de Cheques Rechazados</a>';
+    <div class="banner">
+      <span>TOP</span> NEUMÁTICOS
+    </div>
 
-      // Intenta abrirlo automáticamente en pestaña nueva
-      const nuevaVentana = window.open(url, '_blank');
-      if (!nuevaVentana) {
-        // El navegador bloqueó el popup: el link de arriba queda como respaldo
-        console.warn('El navegador bloqueó la apertura automática. Usar el link manual.');
+    <div class="card">
+      <h2>📦 Control de Remitos</h2>
+      <p>Gestión de estados para logística interna</p>
+      
+      <form id="formRemito">
+        <label>1. Usuario:</label>
+        <select id="usuario" name="usuario" onchange="actualizarPrefijo()" required>
+          <option value="" disabled>Seleccioná tu nombre</option>
+          <option value="Hermes Diego">Hermes Diego</option>
+          <option value="Alexander Ayala">Alexander Ayala</option>
+          <option value="Vera Matias">Vera Matias</option>
+          <option value="Tagliabue Fabrizio">Tagliabue Fabrizio</option>
+          <option value="Favio Rollet">Favio Rollet</option>
+        </select>
+
+        <label>2. Número de Remito:</label>
+        <div class="input-container">
+          <span class="prefix" id="prefijoRemito">DePos/OUT/</span>
+          <input type="number" id="remito_num" name="remito_num" placeholder="Ej: 06997" inputmode="numeric" pattern="[0-9]*" autocomplete="off" required>
+        </div>
+
+        <label>3. Seleccionar Estado:</label>
+        <select id="subestado_id" name="subestado_id" onchange="evaluarEstado()">
+          <option value="2">🚚 En viaje hacia cliente</option>
+          <option value="3">✅ Entrega Final</option>
+        </select>
+        
+        <div id="seccion_foto" class="foto-section">
+          <label style="margin-top:0; color: #856404;">📸 Adjuntar Remito Firmado (Obligatorio):</label>
+          <input type="file" id="foto_remito" name="foto" accept="image/*" capture="environment">
+        </div>
+        
+        <button type="button" class="btn-enviar" id="btnEnviar" onclick="validarYEnviar()">🚀 ACTUALIZAR ESTADO</button>
+      </form>
+      
+      <div id="mensaje"></div>
+    </div>
+
+    <script>
+      var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
+
+      // Mapeo usuario -> depósito
+      var depositoPorUsuario = {
+        "Hermes Diego": "DePos/OUT/",
+        "Alexander Ayala": "DePos/OUT/",
+        "Vera Matias": "DePos/OUT/",
+        "Tagliabue Fabrizio": "DePos/OUT/",
+        "Favio Rollet": "DCtes/OUT/"
+      };
+
+      function actualizarPrefijo() {
+        var usuario = document.getElementById('usuario').value;
+        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
+        document.getElementById('prefijoRemito').innerText = prefijo;
       }
 
-    } catch (err) {
-      estado.classList.remove('visible');
-      resultado.classList.add('visible', 'error');
-      resultado.innerHTML =
-        '❌ No se pudo generar el reporte.<br>' +
-        'Avisale a Fabrizio.';
-    } finally {
-      clearInterval(intervaloReloj);
-      btn.textContent = 'Generar reporte actualizado';
-      actualizarBoton();
-    }
-  }
-</script>
+      function evaluarEstado() {
+        var estado = document.getElementById('subestado_id').value;
+        var seccionFoto = document.getElementById('seccion_foto');
+        if (estado === "3") {
+          seccionFoto.style.display = "block";
+        } else {
+          seccionFoto.style.display = "none";
+          document.getElementById('foto_remito').value = "";
+        }
+      }
 
-</body>
+      // Convierte un File a base64 puro (sin el prefijo data:...;base64,)
+      function archivoABase64(archivo) {
+        return new Promise(function(resolve, reject) {
+          var lector = new FileReader();
+          lector.onload = function() {
+            var resultado = lector.result;
+            var base64 = resultado.split(',')[1];
+            resolve(base64);
+          };
+          lector.onerror = function(error) { reject(error); };
+          lector.readAsDataURL(archivo);
+        });
+      }
+
+      function validarYEnviar() {
+        var usuario = document.getElementById('usuario').value;
+        var numInput = document.getElementById('remito_num').value.trim();
+        var estadoId = document.getElementById('subestado_id').value;
+        var archivoFoto = document.getElementById('foto_remito').files[0];
+        var btn = document.getElementById('btnEnviar');
+
+        if(!usuario) {
+          mostrarMensaje('⚠️ Por favor, seleccioná el usuario.', 'error');
+          return;
+        }
+
+        if(!numInput) {
+          mostrarMensaje('⚠️ Por favor, ingresá el número de remito.', 'error');
+          return;
+        }
+        
+        var prefijo = depositoPorUsuario[usuario] || "DePos/OUT/";
+        var numFormateado = numInput.padStart(5, '0');
+        var remitoCompleto = prefijo + numFormateado;
+        
+        if (estadoId === "3" && !archivoFoto) {
+          mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
+          return;
+        }
+
+        btn.disabled = true;
+        mostrarMensaje('Procesando y subiendo a Drive... ⏳', 'procesando');
+
+        var enviarPayload = function(fotoBase64, fotoNombre) {
+          var payload = {
+            remito_id: remitoCompleto,
+            subestado_id: estadoId,
+            usuario: usuario,
+            fotoBase64: fotoBase64 || "",
+            fotoNombre: fotoNombre || ""
+          };
+
+          fetch(urlAppsScript, {
+            method: "POST",
+            mode: "no-cors",
+            headers: { "Content-Type": "text/plain;charset=utf-8" },
+            body: JSON.stringify(payload)
+          })
+          .then(function() {
+            btn.disabled = false;
+            mostrarMensaje('¡Datos enviados! Verificá en Odoo. ✅', 'exito');
+
+            // Guardamos el usuario para la próxima carga, y reseteamos solo remito/estado/foto
+            var usuarioActual = usuario;
+            document.getElementById('remito_num').value = "";
+            document.getElementById('subestado_id').value = "2";
+            document.getElementById('foto_remito').value = "";
+            document.getElementById('usuario').value = usuarioActual;
+            localStorage.setItem('ultimoUsuario', usuarioActual);
+            actualizarPrefijo();
+            evaluarEstado();
+          })
+          .catch(function(error) {
+            btn.disabled = false;
+            console.error(error);
+            mostrarMensaje('❌ Error al conectar con Apps Script.', 'error');
+          });
+        };
+
+        if (archivoFoto) {
+          archivoABase64(archivoFoto)
+            .then(function(base64) {
+              enviarPayload(base64, numFormateado + ".jpg");
+            })
+            .catch(function() {
+              btn.disabled = false;
+              mostrarMensaje('❌ Error al leer el archivo.', 'error');
+            });
+        } else {
+          enviarPayload(null, null);
+        }
+      }
+
+      function mostrarMensaje(texto, clase) {
+        var msgDiv = document.getElementById('mensaje');
+        msgDiv.innerText = texto;
+        msgDiv.className = clase;
+      }
+
+      // Al cargar la página, recuperamos el último usuario usado (si lo hay)
+      window.onload = function() {
+        var ultimo = localStorage.getItem('ultimoUsuario');
+        if (ultimo) {
+          document.getElementById('usuario').value = ultimo;
+        }
+        actualizarPrefijo();
+      };
+    </script>
+  </body>
 </html>

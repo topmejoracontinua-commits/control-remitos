@@ -85,6 +85,10 @@
           <option value="Sanabria Julio">Sanabria Julio</option>
           <option value="Alejandro Garcia">Alejandro Garcia</option>
           <option value="Alexis Silva">Alexis Silva</option>
+          <option value="Sabrina Hirt">Sabrina Hirt</option>
+          <option value="Francisco Secillia">Francisco Secillia</option>
+          <option value="Ramon Sand">Ramon Sand</option>
+          <option value="Gustavo Schmidt">Gustavo Schmidt</option>
         </select>
 
         <div id="seccion_deposito_manual" style="display:none; margin-top:15px;">
@@ -123,9 +127,27 @@
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
       var ID_CONFIRMACION_FINAL = "6";
+      var ID_RECIBIDO_SUCURSAL = "5";
 
       // Usuario habilitado para ver/usar la opción "Confirmación Final"
       var USUARIO_CONFIRMACION_FINAL = "Vera Matias";
+
+      // Usuarios de sucursal habilitados para ver/usar SOLO la opción "Recibido Sucursal"
+      var usuariosRecibidoSucursal = ["Sabrina Hirt", "Francisco Secillia", "Ramon Sand", "Gustavo Schmidt"];
+
+      // Opciones de estado según el tipo de usuario
+      var OPCIONES_ESTADO = {
+        default: [
+          { value: "4", text: "🏭 Entrega depósito" },
+          { value: "3", text: "✅ Entrega Final" }
+        ],
+        confirmacionFinal: [
+          { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
+        ],
+        recibidoSucursal: [
+          { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" }
+        ]
+      };
 
       // Mapeo usuario -> depósito (automático)
       var depositoPorUsuario = {
@@ -136,7 +158,11 @@
         "Favio Rollet": "DCtes/OUT/",
         "Lubaczewski Jorge": "DePos/OUT/",
         "Sanabria Julio": "DePos/OUT/",
-        "Alexis Silva": "DePos/OUT/"
+        "Alexis Silva": "DePos/OUT/",
+        "Sabrina Hirt": "DePos/OUT/",
+        "Francisco Secillia": "DePos/OUT/",
+        "Ramon Sand": "DePos/OUT/",
+        "Gustavo Schmidt": "DePos/OUT/"
       };
 
       // Usuarios que reparten en ambos depósitos: para ellos el depósito se elige a mano
@@ -150,30 +176,30 @@
         return depositoPorUsuario[usuario] || "DePos/OUT/";
       }
 
-      // Agrega o quita la opción "Confirmación Final" del desplegable de estado
-      // según el usuario seleccionado (solo Vera Matias la ve).
-      function actualizarOpcionConfirmacion() {
+      // Reconstruye el desplegable de estado según el usuario seleccionado:
+      // - Vera Matias: solo "Confirmación Final"
+      // - usuarios de sucursal: solo "Recibido Sucursal"
+      // - el resto: las dos opciones normales (Entrega depósito / Entrega Final)
+      function actualizarOpcionesEstado() {
         var usuario = document.getElementById('usuario').value;
         var selectEstado = document.getElementById('subestado_id');
-        var opcionExistente = document.getElementById('opcion_confirmacion_final');
+        var opciones;
 
         if (usuario === USUARIO_CONFIRMACION_FINAL) {
-          if (!opcionExistente) {
-            var opcion = document.createElement('option');
-            opcion.id = 'opcion_confirmacion_final';
-            opcion.value = ID_CONFIRMACION_FINAL;
-            opcion.text = '🔒 Confirmación Final';
-            selectEstado.appendChild(opcion);
-          }
+          opciones = OPCIONES_ESTADO.confirmacionFinal;
+        } else if (usuariosRecibidoSucursal.indexOf(usuario) !== -1) {
+          opciones = OPCIONES_ESTADO.recibidoSucursal;
         } else {
-          if (opcionExistente) {
-            // Si estaba seleccionada y el usuario cambia, volvemos al valor por defecto
-            if (selectEstado.value === ID_CONFIRMACION_FINAL) {
-              selectEstado.value = "4";
-            }
-            opcionExistente.remove();
-          }
+          opciones = OPCIONES_ESTADO.default;
         }
+
+        selectEstado.innerHTML = "";
+        opciones.forEach(function(op) {
+          var el = document.createElement('option');
+          el.value = op.value;
+          el.text = op.text;
+          selectEstado.appendChild(el);
+        });
       }
 
       function actualizarPrefijo() {
@@ -185,7 +211,7 @@
           seccionManual.style.display = "none";
         }
         document.getElementById('prefijoRemito').innerText = obtenerPrefijoActual();
-        actualizarOpcionConfirmacion();
+        actualizarOpcionesEstado();
         evaluarEstado();
       }
 
@@ -270,7 +296,6 @@
             // Guardamos el usuario para la próxima carga, y reseteamos solo remito/estado/foto
             var usuarioActual = usuario;
             document.getElementById('remito_num').value = "";
-            document.getElementById('subestado_id').value = "4";
             document.getElementById('foto_remito').value = "";
             document.getElementById('usuario').value = usuarioActual;
             localStorage.setItem('ultimoUsuario', usuarioActual);

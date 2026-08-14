@@ -129,7 +129,7 @@
       var ID_CONFIRMACION_FINAL = "6";
       var ID_RECIBIDO_SUCURSAL = "5";
 
-      // Usuario habilitado para ver/usar la opción "Confirmación Final"
+      // Usuario habilitado para ver TODAS las opciones de estado (jefe de logística)
       var USUARIO_CONFIRMACION_FINAL = "Vera Matias";
 
       // Usuarios de sucursal habilitados para ver/usar SOLO la opción "Recibido Sucursal"
@@ -141,11 +141,14 @@
           { value: "4", text: "🏭 Entrega depósito" },
           { value: "3", text: "✅ Entrega Final" }
         ],
-        confirmacionFinal: [
-          { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
-        ],
         recibidoSucursal: [
           { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" }
+        ],
+        todas: [
+          { value: "4", text: "🏭 Entrega depósito" },
+          { value: "3", text: "✅ Entrega Final" },
+          { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" },
+          { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
         ]
       };
 
@@ -177,7 +180,7 @@
       }
 
       // Reconstruye el desplegable de estado según el usuario seleccionado:
-      // - Vera Matias: solo "Confirmación Final"
+      // - Vera Matias (jefe de logística): las 4 opciones
       // - usuarios de sucursal: solo "Recibido Sucursal"
       // - el resto: las dos opciones normales (Entrega depósito / Entrega Final)
       function actualizarOpcionesEstado() {
@@ -186,7 +189,7 @@
         var opciones;
 
         if (usuario === USUARIO_CONFIRMACION_FINAL) {
-          opciones = OPCIONES_ESTADO.confirmacionFinal;
+          opciones = OPCIONES_ESTADO.todas;
         } else if (usuariosRecibidoSucursal.indexOf(usuario) !== -1) {
           opciones = OPCIONES_ESTADO.recibidoSucursal;
         } else {

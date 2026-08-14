@@ -122,6 +122,11 @@
     <script>
       var urlAppsScript = "https://script.google.com/macros/s/AKfycbyCeYtSs7_5F5uT73hQIvd0-u9LNQ7_-U_o5BSJEkTfX_d5MWmsv5UqeugZULkV7AtdUA/exec";
 
+      var ID_CONFIRMACION_FINAL = "6";
+
+      // Usuario habilitado para ver/usar la opción "Confirmación Final"
+      var USUARIO_CONFIRMACION_FINAL = "Vera Matias";
+
       // Mapeo usuario -> depósito (automático)
       var depositoPorUsuario = {
         "Hermes Diego": "DePos/OUT/",
@@ -145,6 +150,32 @@
         return depositoPorUsuario[usuario] || "DePos/OUT/";
       }
 
+      // Agrega o quita la opción "Confirmación Final" del desplegable de estado
+      // según el usuario seleccionado (solo Vera Matias la ve).
+      function actualizarOpcionConfirmacion() {
+        var usuario = document.getElementById('usuario').value;
+        var selectEstado = document.getElementById('subestado_id');
+        var opcionExistente = document.getElementById('opcion_confirmacion_final');
+
+        if (usuario === USUARIO_CONFIRMACION_FINAL) {
+          if (!opcionExistente) {
+            var opcion = document.createElement('option');
+            opcion.id = 'opcion_confirmacion_final';
+            opcion.value = ID_CONFIRMACION_FINAL;
+            opcion.text = '🔒 Confirmación Final';
+            selectEstado.appendChild(opcion);
+          }
+        } else {
+          if (opcionExistente) {
+            // Si estaba seleccionada y el usuario cambia, volvemos al valor por defecto
+            if (selectEstado.value === ID_CONFIRMACION_FINAL) {
+              selectEstado.value = "4";
+            }
+            opcionExistente.remove();
+          }
+        }
+      }
+
       function actualizarPrefijo() {
         var usuario = document.getElementById('usuario').value;
         var seccionManual = document.getElementById('seccion_deposito_manual');
@@ -154,11 +185,18 @@
           seccionManual.style.display = "none";
         }
         document.getElementById('prefijoRemito').innerText = obtenerPrefijoActual();
+        actualizarOpcionConfirmacion();
+        evaluarEstado();
       }
 
       function evaluarEstado() {
-        // Los dos estados disponibles (Entrega depósito y Entrega Final) requieren foto
-        document.getElementById('seccion_foto').style.display = "block";
+        var estadoId = document.getElementById('subestado_id').value;
+        // "Confirmación Final" solo actualiza el subestado en Odoo: no requiere foto
+        if (estadoId === ID_CONFIRMACION_FINAL) {
+          document.getElementById('seccion_foto').style.display = "none";
+        } else {
+          document.getElementById('seccion_foto').style.display = "block";
+        }
       }
 
       // Convierte un File a base64 puro (sin el prefijo data:...;base64,)
@@ -181,6 +219,7 @@
         var estadoId = document.getElementById('subestado_id').value;
         var archivoFoto = document.getElementById('foto_remito').files[0];
         var btn = document.getElementById('btnEnviar');
+        var esConfirmacionFinal = (estadoId === ID_CONFIRMACION_FINAL);
 
         if(!usuario) {
           mostrarMensaje('⚠️ Por favor, seleccioná el usuario.', 'error');
@@ -201,13 +240,13 @@
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
         
-        if (!archivoFoto) {
+        if (!esConfirmacionFinal && !archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
           return;
         }
 
         btn.disabled = true;
-        mostrarMensaje('Procesando y subiendo a Drive... ⏳', 'procesando');
+        mostrarMensaje(esConfirmacionFinal ? 'Confirmando estado... ⏳' : 'Procesando y subiendo a Drive... ⏳', 'procesando');
 
         var enviarPayload = function(fotoBase64, fotoNombre) {
           var payload = {
@@ -236,7 +275,6 @@
             document.getElementById('usuario').value = usuarioActual;
             localStorage.setItem('ultimoUsuario', usuarioActual);
             actualizarPrefijo();
-            evaluarEstado();
           })
           .catch(function(error) {
             btn.disabled = false;
@@ -245,7 +283,7 @@
           });
         };
 
-        if (archivoFoto) {
+        if (!esConfirmacionFinal && archivoFoto) {
           archivoABase64(archivoFoto)
             .then(function(base64) {
               enviarPayload(base64, numFormateado + ".jpg");
@@ -272,7 +310,6 @@
           document.getElementById('usuario').value = ultimo;
         }
         actualizarPrefijo();
-        evaluarEstado();
       };
     </script>
   </body>

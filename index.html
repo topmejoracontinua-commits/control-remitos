@@ -129,28 +129,13 @@
       var ID_CONFIRMACION_FINAL = "6";
       var ID_RECIBIDO_SUCURSAL = "5";
 
-      // Usuario habilitado para ver TODAS las opciones de estado (jefe de logística)
-      var USUARIO_CONFIRMACION_FINAL = "Vera Matias";
-
-      // Usuarios de sucursal habilitados para ver/usar SOLO la opción "Recibido Sucursal"
-      var usuariosRecibidoSucursal = ["Sabrina Hirt", "Francisco Secillia", "Ramon Sand", "Gustavo Schmidt"];
-
-      // Opciones de estado según el tipo de usuario
-      var OPCIONES_ESTADO = {
-        default: [
-          { value: "4", text: "🏭 Entrega depósito" },
-          { value: "3", text: "✅ Entrega Final" }
-        ],
-        recibidoSucursal: [
-          { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" }
-        ],
-        todas: [
-          { value: "4", text: "🏭 Entrega depósito" },
-          { value: "3", text: "✅ Entrega Final" },
-          { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" },
-          { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
-        ]
-      };
+      // Todas las opciones de estado disponibles (ahora habilitadas para TODOS los usuarios)
+      var OPCIONES_ESTADO_TODAS = [
+        { value: "4", text: "🏭 Entrega depósito" },
+        { value: "3", text: "✅ Entrega Final" },
+        { value: ID_RECIBIDO_SUCURSAL, text: "🏢 Recibido Sucursal" },
+        { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
+      ];
 
       // Mapeo usuario -> depósito (automático)
       var depositoPorUsuario = {
@@ -179,25 +164,12 @@
         return depositoPorUsuario[usuario] || "DePos/OUT/";
       }
 
-      // Reconstruye el desplegable de estado según el usuario seleccionado:
-      // - Vera Matias (jefe de logística): las 4 opciones
-      // - usuarios de sucursal: solo "Recibido Sucursal"
-      // - el resto: las dos opciones normales (Entrega depósito / Entrega Final)
+      // Ahora todos los usuarios ven las mismas 4 opciones de estado
       function actualizarOpcionesEstado() {
-        var usuario = document.getElementById('usuario').value;
         var selectEstado = document.getElementById('subestado_id');
-        var opciones;
-
-        if (usuario === USUARIO_CONFIRMACION_FINAL) {
-          opciones = OPCIONES_ESTADO.todas;
-        } else if (usuariosRecibidoSucursal.indexOf(usuario) !== -1) {
-          opciones = OPCIONES_ESTADO.recibidoSucursal;
-        } else {
-          opciones = OPCIONES_ESTADO.default;
-        }
 
         selectEstado.innerHTML = "";
-        opciones.forEach(function(op) {
+        OPCIONES_ESTADO_TODAS.forEach(function(op) {
           var el = document.createElement('option');
           el.value = op.value;
           el.text = op.text;

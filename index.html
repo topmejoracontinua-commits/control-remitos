@@ -95,8 +95,6 @@
           <label style="margin-top:0;">Depósito:</label>
           <select id="deposito_manual" onchange="actualizarPrefijo()">
             <option value="" selected disabled>Seleccioná depósito</option>
-            <option value="DePos/OUT/">Posadas</option>
-            <option value="DCtes/OUT/">Corrientes</option>
           </select>
         </div>
 
@@ -129,7 +127,7 @@
       var ID_CONFIRMACION_FINAL = "6";
       var ID_RECIBIDO_SUCURSAL = "5";
 
-      // Todas las opciones de estado disponibles (ahora habilitadas para TODOS los usuarios)
+      // Todas las opciones de estado disponibles (habilitadas para TODOS los usuarios)
       var OPCIONES_ESTADO_TODAS = [
         { value: "4", text: "🏭 Entrega depósito" },
         { value: "3", text: "✅ Entrega Final" },
@@ -137,23 +135,62 @@
         { value: ID_CONFIRMACION_FINAL, text: "🔒 Confirmación Final" }
       ];
 
-      // Mapeo usuario -> depósito (automático)
+      // Mapeo usuario -> depósito fijo (automático, un solo depósito)
       var depositoPorUsuario = {
         "Hermes Diego": "DePos/OUT/",
         "Alexander Ayala": "DePos/OUT/",
         "Vera Matias": "DePos/OUT/",
         "Tagliabue Fabrizio": "DePos/OUT/",
         "Lubaczewski Jorge": "DePos/OUT/",
-        "Sanabria Julio": "DePos/OUT/",
-        "Alexis Silva": "DePos/OUT/",
-        "Sabrina Hirt": "DePos/OUT/",
         "Francisco Secillia": "DePos/OUT/",
-        "Ramon Sand": "DePos/OUT/",
         "Gustavo Schmidt": "DePos/OUT/"
       };
 
-      // Usuarios que reparten en ambos depósitos: para ellos el depósito se elige a mano
-      var usuariosDepositoManual = ["Lucas Talavera", "Alejandro Garcia", "Favio Rollet"];
+      // Usuarios que reparten en más de un depósito: cada uno con su propio par de opciones
+      var opcionesDepositoManual = {
+        "Lucas Talavera": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "DCtes/OUT/", label: "Corrientes" }
+        ],
+        "Alejandro Garcia": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "DCtes/OUT/", label: "Corrientes" }
+        ],
+        "Favio Rollet": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "DCtes/OUT/", label: "Corrientes" }
+        ],
+        "Sanabria Julio": [
+          { value: "ELDO/OUT/", label: "Eldorado" },
+          { value: "DePos/OUT/", label: "Posadas" }
+        ],
+        "Alexis Silva": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "OBED/OUT/", label: "Obera" }
+        ],
+        "Ramon Sand": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "OBED/OUT/", label: "Obera" }
+        ],
+        "Sabrina Hirt": [
+          { value: "DePos/OUT/", label: "Posadas" },
+          { value: "ELDO/OUT/", label: "Eldorado" }
+        ]
+      };
+
+      var usuariosDepositoManual = Object.keys(opcionesDepositoManual);
+
+      function poblarOpcionesDepositoManual(usuario) {
+        var select = document.getElementById('deposito_manual');
+        select.innerHTML = '<option value="" selected disabled>Seleccioná depósito</option>';
+        var opciones = opcionesDepositoManual[usuario] || [];
+        opciones.forEach(function(op) {
+          var el = document.createElement('option');
+          el.value = op.value;
+          el.text = op.label;
+          select.appendChild(el);
+        });
+      }
 
       function obtenerPrefijoActual() {
         var usuario = document.getElementById('usuario').value;
@@ -163,7 +200,7 @@
         return depositoPorUsuario[usuario] || "DePos/OUT/";
       }
 
-      // Ahora todos los usuarios ven las mismas 4 opciones de estado
+      // Todos los usuarios ven las mismas 4 opciones de estado
       function actualizarOpcionesEstado() {
         var selectEstado = document.getElementById('subestado_id');
 
@@ -180,6 +217,7 @@
         var usuario = document.getElementById('usuario').value;
         var seccionManual = document.getElementById('seccion_deposito_manual');
         if (usuariosDepositoManual.indexOf(usuario) !== -1) {
+          poblarOpcionesDepositoManual(usuario);
           seccionManual.style.display = "block";
         } else {
           seccionManual.style.display = "none";
@@ -227,7 +265,7 @@
         }
 
         if(usuariosDepositoManual.indexOf(usuario) !== -1 && !document.getElementById('deposito_manual').value) {
-          mostrarMensaje('⚠️ Por favor, seleccioná el depósito (Posadas o Corrientes).', 'error');
+          mostrarMensaje('⚠️ Por favor, seleccioná el depósito.', 'error');
           return;
         }
 

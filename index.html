@@ -73,7 +73,7 @@
       
       <form id="formRemito">
         <label>1. Usuario:</label>
-        <select id="usuario" name="usuario" onchange="actualizarPrefijo()" required>
+        <select id="usuario" name="usuario" onchange="onUsuarioChange()" required>
           <option value="" disabled>Seleccioná tu nombre</option>
           <option value="Hermes Diego">Hermes Diego</option>
           <option value="Alexander Ayala">Alexander Ayala</option>
@@ -93,7 +93,7 @@
 
         <div id="seccion_deposito_manual" style="display:none; margin-top:15px;">
           <label style="margin-top:0;">Depósito:</label>
-          <select id="deposito_manual" onchange="actualizarPrefijo()">
+          <select id="deposito_manual" onchange="onDepositoManualChange()">
             <option value="" selected disabled>Seleccioná depósito</option>
           </select>
         </div>
@@ -213,7 +213,9 @@
         });
       }
 
-      function actualizarPrefijo() {
+      // Se ejecuta SOLO al cambiar el usuario: repuebla el desplegable de
+      // depósito (si corresponde) y reinicia estado/prefijo.
+      function onUsuarioChange() {
         var usuario = document.getElementById('usuario').value;
         var seccionManual = document.getElementById('seccion_deposito_manual');
         if (usuariosDepositoManual.indexOf(usuario) !== -1) {
@@ -222,9 +224,19 @@
         } else {
           seccionManual.style.display = "none";
         }
-        document.getElementById('prefijoRemito').innerText = obtenerPrefijoActual();
         actualizarOpcionesEstado();
+        actualizarPrefijoTexto();
         evaluarEstado();
+      }
+
+      // Se ejecuta al cambiar el desplegable de depósito manual: NO debe
+      // repoblar sus propias opciones (eso borraría la selección recién hecha).
+      function onDepositoManualChange() {
+        actualizarPrefijoTexto();
+      }
+
+      function actualizarPrefijoTexto() {
+        document.getElementById('prefijoRemito').innerText = obtenerPrefijoActual();
       }
 
       function evaluarEstado() {
@@ -311,7 +323,7 @@
             document.getElementById('foto_remito').value = "";
             document.getElementById('usuario').value = usuarioActual;
             localStorage.setItem('ultimoUsuario', usuarioActual);
-            actualizarPrefijo();
+            onUsuarioChange();
           })
           .catch(function(error) {
             btn.disabled = false;
@@ -346,7 +358,7 @@
         if (ultimo) {
           document.getElementById('usuario').value = ultimo;
         }
-        actualizarPrefijo();
+        onUsuarioChange();
       };
     </script>
   </body>

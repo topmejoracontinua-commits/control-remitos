@@ -74,7 +74,7 @@
       <form id="formRemito">
         <label>1. Usuario:</label>
         <select id="usuario" name="usuario" onchange="onUsuarioChange()" required>
-          <option value="" disabled>Seleccioná tu nombre</option>
+          <option value="" disabled selected>Seleccioná tu nombre</option>
           <option value="Hermes Diego">Hermes Diego</option>
           <option value="Alexander Ayala">Alexander Ayala</option>
           <option value="Vera Matias">Vera Matias</option>
@@ -126,6 +126,10 @@
 
       var ID_CONFIRMACION_FINAL = "6";
       var ID_RECIBIDO_SUCURSAL = "5";
+
+      // Compresión de la foto antes de enviarla
+      var FOTO_MAX_LADO = 1600;   // px del lado más largo
+      var FOTO_CALIDAD = 0.7;     // JPEG de 0 a 1
 
       // Todas las opciones de estado disponibles (habilitadas para TODOS los usuarios)
       var OPCIONES_ESTADO_TODAS = [
@@ -249,17 +253,35 @@
         }
       }
 
-      // Convierte un File a base64 puro (sin el prefijo data:...;base64,)
-      function archivoABase64(archivo) {
+      // Redimensiona y comprime la imagen; devuelve base64 puro (sin el prefijo data:...;base64,)
+      function comprimirImagen(archivo) {
         return new Promise(function(resolve, reject) {
-          var lector = new FileReader();
-          lector.onload = function() {
-            var resultado = lector.result;
-            var base64 = resultado.split(',')[1];
-            resolve(base64);
+          var url = URL.createObjectURL(archivo);
+          var img = new Image();
+          img.onload = function() {
+            var ancho = img.naturalWidth;
+            var alto = img.naturalHeight;
+            var escala = Math.min(1, FOTO_MAX_LADO / Math.max(ancho, alto));
+            var w = Math.round(ancho * escala);
+            var h = Math.round(alto * escala);
+
+            var canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(0, 0, w, h);
+            ctx.drawImage(img, 0, 0, w, h);
+
+            var dataUrl = canvas.toDataURL('image/jpeg', FOTO_CALIDAD);
+            URL.revokeObjectURL(url);
+            resolve(dataUrl.split(',')[1]);
           };
-          lector.onerror = function(error) { reject(error); };
-          lector.readAsDataURL(archivo);
+          img.onerror = function() {
+            URL.revokeObjectURL(url);
+            reject(new Error("No se pudo leer la imagen"));
+          };
+          img.src = url;
         });
       }
 
@@ -289,6 +311,8 @@
         var prefijo = obtenerPrefijoActual();
         var numFormateado = numInput.padStart(5, '0');
         var remitoCompleto = prefijo + numFormateado;
+        // Nombre de archivo único por depósito, ej: DePos_OUT_06997.jpg
+        var nombreArchivo = remitoCompleto.replace(/\//g, '_') + ".jpg";
         
         if (!esConfirmacionFinal && !archivoFoto) {
           mostrarMensaje('❌ Debes sacar o adjuntar la foto del remito firmado.', 'error');
@@ -296,7 +320,7 @@
         }
 
         btn.disabled = true;
-        mostrarMensaje(esConfirmacionFinal ? 'Confirmando estado... ⏳' : 'Procesando y subiendo a Drive... ⏳', 'procesando');
+        mostrarMensaje(esConfirmacionFinal ? 'Confirmando estado... ⏳' : 'Procesando y enviando foto... ⏳', 'procesando');
 
         var enviarPayload = function(fotoBase64, fotoNombre) {
           var payload = {
@@ -322,7 +346,7 @@
             document.getElementById('remito_num').value = "";
             document.getElementById('foto_remito').value = "";
             document.getElementById('usuario').value = usuarioActual;
-            localStorage.setItem('ultimoUsuario', usuarioActual);
+            try { localStorage.setItem('ultimoUsuario', usuarioActual); } catch(e) {}
             onUsuarioChange();
           })
           .catch(function(error) {
@@ -333,13 +357,13 @@
         };
 
         if (!esConfirmacionFinal && archivoFoto) {
-          archivoABase64(archivoFoto)
+          comprimirImagen(archivoFoto)
             .then(function(base64) {
-              enviarPayload(base64, numFormateado + ".jpg");
+              enviarPayload(base64, nombreArchivo);
             })
             .catch(function() {
               btn.disabled = false;
-              mostrarMensaje('❌ Error al leer el archivo.', 'error');
+              mostrarMensaje('❌ Error al leer la foto. Probá sacándola de nuevo.', 'error');
             });
         } else {
           enviarPayload(null, null);
@@ -354,7 +378,8 @@
 
       // Al cargar la página, recuperamos el último usuario usado (si lo hay)
       window.onload = function() {
-        var ultimo = localStorage.getItem('ultimoUsuario');
+        var ultimo = null;
+        try { ultimo = localStorage.getItem('ultimoUsuario'); } catch(e) {}
         if (ultimo) {
           document.getElementById('usuario').value = ultimo;
         }
